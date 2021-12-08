@@ -23,6 +23,7 @@
   accompanied by a CDS to signal the --dry-run part (needs support by parents
   that do not accept DS records).
 * --dry-run and real DS coexistence:
+
   why?
   * intentionally to test different DNSSEC options (eg., rolling to stronger
     algorithm key);
@@ -30,6 +31,7 @@
   * unintentionally because weird caches?;
   (question: can you have multiple DS for the same key?
              yes as long as the digest type changes)
+
   what?
   * If real DS is picked by validator, carry on.
   * If --dry-run is picked,

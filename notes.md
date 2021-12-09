@@ -16,6 +16,10 @@
 * Everything under DS --dry-run is treated as secure, and insecure instead of
   bogus. Security consideration for the latter as it allows hijacks.
   (The option to always be insecure is not fully out of the question yet.)
+  (Maybe it is, returning secure when possible is fine; stubs that don't
+  validate don't care, stubs/clients that check the AD bit have more
+  information to work with. This is still in the spirit of this proposal;
+  testing DNSSEC but don't break DNS.)
 * Main function is to report (EDNS upstream or client) DNSSEC errors. Should
   not be used instead of proper DNSSEC because it is not secure.
   Especially for dump clients(@Willem).

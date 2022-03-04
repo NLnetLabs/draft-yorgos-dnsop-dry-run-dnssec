@@ -87,10 +87,10 @@ in the parent, an invalid answer yields an insecure response.
 This is of course not proper data integrity
 but the delegation should not be considered DNSSEC signed at this point.
 
-The main purpose of dry-run DNSSEC is to be able to monitor potential DNS
-breakage when changing the DNSSEC configuration for a zone. The main tool to do
-that is DNS Error Reporting [@DNS-ERROR-REPORTING], which is essential for
-reporting the potential dry-run DNSSEC errors.
+Based on DNS Error Reporting [@DNS-ERROR-REPORTING], invalid answers for
+dry-run DNSSEC errors generate reports in order to monitor potential DNS
+breakage when changing the DNSSEC configuration for a zone. This is also the
+main purpose of dry-run DNSSEC.
 
 The signed zone is publicly deployed but DNSSEC configuration errors cannot
 break DNS resolution yet. DNSSEC health feedback can pinpoint potential issues

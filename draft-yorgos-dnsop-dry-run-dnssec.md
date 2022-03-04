@@ -169,7 +169,7 @@ Algorithm MUST disregard the DS record as per [@RFC6840, see, section 5.2].
 
 The main purpose of the dry-run DNSSEC proposal is to be able to monitor
 potential DNS breakage when adopting DNSSEC for a zone. The main tool to do
-that is DNS Error Reporting [@DNS-ERROR-REPORRTING].
+that is DNS Error Reporting [@DNS-ERROR-REPORTING].
 
 Operators that want to use dry-run DNSSEC SHOULD support DNSSEC Error Reporting
 and have a reporting agent in place to receive the error reports.

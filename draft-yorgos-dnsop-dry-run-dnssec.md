@@ -75,20 +75,22 @@ publish a newly signed zone there is no way to realistically check that DNS
 will not break for the zone.
 
 This document describes a method called "dry-run DNSSEC" that gives confidence
-to operators to adopt DNSSEC by introducing a new special DS Type Digest
+to operators to adopt DNSSEC by introducing a new DS Type Digest
 Algorithm. Resolvers that don't support the algorithm continue to treat the
 delegation as insecure [@RFC6840, see, section 5.2]. Validating resolvers are
 signaled to treat the delegation as being in an intermediate test step for
-DNSSEC. Valid answers yield authentic data (AD) responses. Clients that expect
+DNSSEC. Valid answers yield authentic data (AD) responses. Therefore, clients that expect
 the AD flag can already profit from the transition. Invalid answers instead of
 SERVFAIL yield the response that would have been answered when no dry-run
 DS would have been present in the parent. For zones that had only dry-run DS RRs
 in the parent, an invalid answer yields an insecure response.
-
 This is of course not proper data integrity
 but the delegation should not be considered DNSSEC signed at this point.
-Together with DNS Error Reporting [@DNS-ERROR-REPORTING] support, which is essential for dry-run
-DNSSEC, DNSSEC health is reported back to the operator.
+
+The main purpose of dry-run DNSSEC is to be able to monitor potential DNS
+breakage when changing the DNSSEC configuration for a zone. The main tool to do
+that is DNS Error Reporting [@DNS-ERROR-REPORTING], which is essential for
+reporting the potential dry-run DNSSEC errors.
 
 The signed zone is publicly deployed but DNSSEC configuration errors cannot
 break DNS resolution yet. DNSSEC health feedback can pinpoint potential issues
@@ -185,7 +187,7 @@ The only change that needs to happen for dry-run DNSSEC is for the parent to
 be able to publish the dry-run DS record. If the parent accepts DS records from
 the child, the child needs to provide the dry-run DS record. If the parent does
 not accept DS records and generates the DS records from the DNSKEY, support for
-generating the dry-run DS record when needed should be added to the parent if
+generating the dry-run DS record, when needed, should be added to the parent if
 dry-run DNSSEC is a desirable feature.
 
 When the child zone operator wants to complete the DNSSEC deployment, the

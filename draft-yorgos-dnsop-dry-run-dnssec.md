@@ -27,6 +27,13 @@ organization = "NLnet Labs"
  country = "Netherlands"
 
 [[author]]
+initials = "R."
+surname = "Arends"
+fullname = "Roy Arends"
+organization = "ICANN"
+[author.address]
+ email = "roy.arends@icann.org"
+[[author]]
 initials="W."
 surname="Toorop"
 fullname="Willem Toorop"
@@ -45,12 +52,12 @@ organization = "NLnet Labs"
 
 This document describes a method called "dry-run DNSSEC" that allows for
 testing DNSSEC deployments without affecting the DNS service in case of
-configuration errors. It accomplishes that by introducing a new DS Type Digest
+DNSSEC errors. It accomplishes that by introducing a new DS Type Digest
 Algorithm that signals to validating resolvers that dry-run DNSSEC is used for
 the zone. DNSSEC errors are then reported with DNS Error Reporting, but the
-bogus answer is withheld and instead resolvers fallback from dry-run DNSSEC and
-provide the answer they would normally produce for the zone. Further options
-are presented for testing key rollovers with this method and an option for
+bogus response is withheld. Instead resolvers fallback from dry-run DNSSEC and
+provide the response that would have been answered without the presence of a dry-run DS.
+A further option is presented for
 clients to opt-in for dry-run DNSSEC errors and allow for end-to-end DNSSEC
 testing.
 
@@ -73,9 +80,13 @@ delegation as insecure [@RFC6840, see, section 5.2]. Validating resolvers are
 signaled to treat the delegation as being in an intermediate test step for
 DNSSEC. Valid answers yield authentic data (AD) responses. Clients that expect
 the AD flag can already profit from the transition. Invalid answers instead of
-SERVFAIL yield the insecure data. This is of course not proper data integrity
+SERVFAIL yield the response that would have been answered when no dry-run
+DS would have been present in the parent. For zones that had only dry-run DS RRs
+in the parent, an invalid answer yields an insecure response.
+
+This is of course not proper data integrity
 but the delegation should not be considered DNSSEC signed at this point.
-Together with DNS Error Reporting support, which is essential for dry-run
+Together with DNS Error Reporting [@DNS-ERROR-REPORTING] support, which is essential for dry-run
 DNSSEC, DNSSEC health is reported back to the operator.
 
 The signed zone is publicly deployed but DNSSEC configuration errors cannot
@@ -93,7 +104,7 @@ validate with a dry-run DS before falling back to real DSes.
 For further end-to-end DNS testing, a new EDNS0 option code is introduced that
 a client can send along with a query to a validating resolver. This signals
 validating resolvers that the client has opted-in to DNSSEC errors for dry-run
-delegations. The resolver still uses DNS Error Reporting for dry-run errors
+delegations. The resolver still uses DNS Error Reporting [@DNS-ERROR-REPORTING] for dry-run errors
 but instead of the insecure answer it provides the client with the SERVFAIL
 answer, same as with actual DNSSEC. These clients are called "wet-run clients".
 
@@ -158,7 +169,7 @@ Algorithm MUST disregard the DS record as per [@RFC6840, see, section 5.2].
 
 The main purpose of the dry-run DNSSEC proposal is to be able to monitor
 potential DNS breakage when adopting DNSSEC for a zone. The main tool to do
-that is DNSSEC Error Reporting [citation needed].
+that is DNS Error Reporting [@DNS-ERROR-REPORRTING].
 
 Operators that want to use dry-run DNSSEC SHOULD support DNSSEC Error Reporting
 and have a reporting agent in place to receive the error reports.
@@ -276,11 +287,17 @@ Status         OPTIONAL (MANDATORY?)
 
 # Acknowledgements
 
-This document is based on an idea by Yorgos Thessalonikefs and Willem Toorop.
-Roy Arends contributed the structure of the dry-run DS for the digest type and
-the digest content containing the intended digest type.
 Martin Hoffmann contributed the idea of using the DS record of an already
 signed zone also as a dry-run DS in order to facilitate testing key rollovers.
+
+<reference anchor='DNS-ERROR-REPORTING' target='https://datatracker.ietf.org/doc/html/draft-ietf-dnsop-dns-error-reporting'>
+    <front>
+        <title>DNS Error Reporting</title>
+        <author fullname="Roy Arends" initials="R." surname="Arends" />
+        <author fullname="Matt Larson" initials="M." surname="Larson" />
+        <date/>
+    </front>
+</reference>
 
 {backmatter}
 

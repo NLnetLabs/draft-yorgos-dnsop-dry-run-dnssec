@@ -147,17 +147,17 @@ dry-run signaling to a validating resolver. The DS Type Digest Algorithm value
 MUST be TBD (DRY-RUN). The first octet of the DS Digest field contains the
 actual Type Digest Algorithm, followed by the actual Digest:
 
-
-                        1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 3 3
-    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |           Key Tag             |  Algorithm    |    DRY-RUN    |
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   | Digest Type   |                                               /
-   +-+-+-+-+-+-+-+-+            Digest                             /
-   /                                                               /
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-
+~~~ ascii-art
+                     1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 3 3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|           Key Tag             |  Algorithm    |    DRY-RUN    |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| Digest Type   |                                               /
++-+-+-+-+-+-+-+-+            Digest                             /
+/                                                               /
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+~~~
 
 Validating resolvers encountering such a DS record will know to mark this
 delegation as dry-run DNSSEC and extract the actual Type Digest Algorithm and
@@ -265,26 +265,24 @@ be treated as insecure.
 
 # IANA Considerations
 
-## A New Wet-Run EDNS0 Option
+## DRY-RUN DS Type Digest Algorithm
 
-This document updates the IANA registry for EDNS0 options, currently called
-"DNS EDNS0 Option Codes (OPT)". The following entry has been added:
+This document defines a new entry in the "Delegation Signer (DS) Resource Record (RR) Type Digest
+Algorithms" registry:
 
-Value          TBD
-Name           Wet-Run DNSSEC
-Status         Standard
-Reference      This document
+Value | Digest Type | Status   | Reference
+-----:|-------------|----------|----------------
+TBD   | DRY-RUN     | OPTIONAL | [this document]
 
-## A New DRY-RUN DS Type Digest Algorithm
 
-This document updates the IANA registry for digest types in DS records,
-currently called "Delegation Signer (DS) Resource Record (RR) Type Digest
-Algorithms".  The following entry has been added:
+## Wet-Run EDNS0 Option
 
-Value          TBD
-Digest Type    DRY-RUN
-Status         OPTIONAL (MANDATORY?)
+This document defines a new entry in the "DNS EDNS0 Option Codes (OPT)" registry on the "Domain Name System (DNS) Parameters" page:
 
+
+Value | Name           | Status   | Referrence
+-----:|----------------|----------|----------------
+TBD   | Wet-Run DNSSEC | Optional | [this document]
 
 # Acknowledgements
 

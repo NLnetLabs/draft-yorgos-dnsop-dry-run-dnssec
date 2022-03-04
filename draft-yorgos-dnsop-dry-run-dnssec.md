@@ -27,13 +27,6 @@ organization = "NLnet Labs"
  country = "Netherlands"
 
 [[author]]
-initials = "R."
-surname = "Arends"
-fullname = "Roy Arends"
-organization = "ICANN"
-[author.address]
- email = "roy.arends@icann.org"
-[[author]]
 initials="W."
 surname="Toorop"
 fullname="Willem Toorop"
@@ -45,6 +38,14 @@ organization = "NLnet Labs"
  city = "Amsterdam"
  code = "1098 XH"
  country = "Netherlands"
+
+[[author]]
+initials = "R."
+surname = "Arends"
+fullname = "Roy Arends"
+organization = "ICANN"
+[author.address]
+ email = "roy.arends@icann.org"
 %%%
 
 

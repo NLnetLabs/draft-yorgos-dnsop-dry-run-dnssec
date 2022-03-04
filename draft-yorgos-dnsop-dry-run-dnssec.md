@@ -282,7 +282,7 @@ TBD   | DRY-RUN     | OPTIONAL | [this document]
 This document defines a new entry in the "DNS EDNS0 Option Codes (OPT)" registry on the "Domain Name System (DNS) Parameters" page:
 
 
-Value | Name           | Status   | Referrence
+Value | Name           | Status   | Reference
 -----:|----------------|----------|----------------
 TBD   | Wet-Run DNSSEC | Optional | [this document]
 

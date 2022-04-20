@@ -1,5 +1,86 @@
 # --dry-run DNSSEC
 
+## Feedback from IETF 113
+
+### This is another straw on the camel's back
+
+- Ralf Weber and many others
+
+Not all resolvers have to support/implement it. Most important is that
+provisioning at the registry and signalling of Dry-run is supported. If needed
+we can say it is OPTIONAL for resolvers in the draft. We intend to implement it
+ourselves in Unbound and have it enabled by default when error reporting is
+enabled. We know from experience with trust-anchor signalling and sentinel
+record that with only a small, up to date  resolver population, the signalling
+is already quite substantial.
+
+There are different kind of straws and this one is one that has the good cause
+of enabling operators to deploy DNSSEC with confidence.
+
+### Why not have a duplicate parallel test deployment?
+
+- Benjamin Schwartz
+
+You don't get your actual user population to dry-run your DNSSEC deployment.
+
+### Why not sell DNSSEC domains cheaper?
+
+- Ralf Weber
+
+Yes please! But, there are still domain-owners that cannot or do not want to
+rely on third party DNS operators that will do the DNSSEC for them.
+
+### Registry supports only fixed sized hashes per hash algorithm
+
+- Feedback from Gavin from CentralNic.
+
+- We could also have a Dry-run hash algorithm per DS algorithm.
+
+  - disadvantage burn hash algorithms twice as fast
+
+- Registries could also just change this rule for Dry-run.
+
+### Hash is created from DNSKEY (or CDNSKEY)
+
+- Feedback from Gavin Brown from CentralNIC.
+
+- DNSKEYs do have space for flags which are ignored. There was a suggestion to
+  use the flags in the DNSKEY to signal Dry-run, but we do not like it, because
+  it makes the move to actual DNSSEC impossible without also changing the DNSKEY
+  RRset.
+
+### Idea: Have a general purpose DS Digest Type for signaling
+
+- From Ben Schwartz
+
+- To avoid polluting the digest type space with all the different ideas.
+
+- Sure, it will be another draft dependency then. Personally we'd prefer Petr's
+  idea (see below).
+
+### Idea from Petr: Normalize the different DS hacks
+
+- There are now several drafts on hold because they want to "misuse" DS for
+  signalling. Petr's proposal: Why not have a range of RR types for which the
+  parent is authoritative (like DS, and what NS should have been).
+
+  This could work for Dry-run, we could have a DDS RR type which would have the
+  same rdata as DS, but then signals Dry-run.
+
+  We like it, but it creates another dependency for all these drafts (including
+  ours) to progress.
+
+
+### Would this be possible to test root DNSKEY (algorithm) rollover
+
+- From Shane Kerr
+
+It would be possible with Dry-run DS Digest Type in the <DigestType> element in
+http://data.iana.org/root-anchors/root-anchors.xml or a different way of
+indicating in the xml file.
+
+---------------------------------
+
 ## Goal:
 * --dry-run zones allow testing DNSSEC deployment before “actually” deploying
   and potentially breaking DNS.

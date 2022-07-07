@@ -53,14 +53,15 @@ organization = "ICANN"
 
 This document describes a method called "dry-run DNSSEC" that allows for
 testing DNSSEC deployments without affecting the DNS service in case of
-DNSSEC errors. It accomplishes that by introducing a new DS Type Digest
-Algorithm that signals to validating resolvers that dry-run DNSSEC is used for
-the zone. DNSSEC errors are then reported with DNS Error Reporting, but the
-bogus response is withheld. Instead resolvers fallback from dry-run DNSSEC and
-provide the response that would have been answered without the presence of a dry-run DS.
-A further option is presented for
-clients to opt-in for dry-run DNSSEC errors and allow for end-to-end DNSSEC
-testing.
+DNSSEC errors.
+It accomplishes that by introducing a new DS Type Digest Algorithm that signals
+to validating resolvers that dry-run DNSSEC is used for the zone.
+DNSSEC errors are then reported with DNS Error Reporting, but the
+bogus response is withheld.
+Instead resolvers fallback from dry-run DNSSEC and provide the response that
+would have been answered without the presence of a dry-run DS.
+A further option is presented for clients to opt-in for dry-run DNSSEC errors
+and allow for end-to-end DNSSEC testing.
 
 
 {mainmatter}
@@ -69,47 +70,55 @@ testing.
 # Introduction
 
 DNSSEC was introduced to provide DNS with data origin authentication and data
-integrity. This introduced quite an amount of complexity and fragility to the
-DNS which in turn still hinders general adoption. When an operator decides to
-publish a newly signed zone there is no way to realistically check that DNS
-will not break for the zone.
+integrity.
+This introduced quite an amount of complexity and fragility to the DNS which in
+turn still hinders general adoption.
+When an operator decides to publish a newly signed zone there is no way to
+realistically check that DNS will not break for the zone.
 
 This document describes a method called "dry-run DNSSEC" that gives confidence
-to operators to adopt DNSSEC by introducing a new DS Type Digest
-Algorithm. Resolvers that don't support the algorithm continue to treat the
-delegation as insecure [@RFC6840, see, section 5.2]. Validating resolvers are
-signaled to treat the delegation as being in an intermediate test step for
-DNSSEC. Valid answers yield authentic data (AD) responses. Therefore, clients that expect
-the AD flag can already profit from the transition. Invalid answers instead of
-SERVFAIL yield the response that would have been answered when no dry-run
-DS would have been present in the parent. For zones that had only dry-run DS RRs
-in the parent, an invalid answer yields an insecure response.
-This is of course not proper data integrity
-but the delegation should not be considered DNSSEC signed at this point.
+to operators to adopt DNSSEC by introducing a new DS Type Digest Algorithm.
+Resolvers that don't support the algorithm continue to treat the delegation as
+insecure [@RFC6840, see, section 5.2].
+Validating resolvers are signaled to treat the delegation as being in an
+intermediate test step for DNSSEC.
+Valid answers yield authentic data (AD) responses.
+Therefore, clients that expect the AD flag can already profit from the
+transition.
+Invalid answers instead of SERVFAIL yield the response that would have been
+answered when no dry-run DS would have been present in the parent.
+For zones that had only dry-run DS RRs in the parent, an invalid answer yields
+an insecure response.
+This is of course not proper data integrity but the delegation should not be
+considered DNSSEC signed at this point.
 
 Based on DNS Error Reporting [@DNS-ERROR-REPORTING], invalid answers for
 dry-run DNSSEC errors generate reports in order to monitor potential DNS
-breakage when changing the DNSSEC configuration for a zone. This is also the
-main purpose of dry-run DNSSEC.
+breakage when changing the DNSSEC configuration for a zone.
+This is also the main purpose of dry-run DNSSEC.
 
 The signed zone is publicly deployed but DNSSEC configuration errors cannot
-break DNS resolution yet. DNSSEC health feedback can pinpoint potential issues
-back to the operator. When the operator is confident that the DNSSEC adoption
-does not introduce DNS breakage, the real DS record can be published on the
-parent zone and that concludes the actual DNSSEC deployment.
+break DNS resolution yet.
+DNSSEC health feedback can pinpoint potential issues back to the operator.
+When the operator is confident that the DNSSEC adoption does not introduce DNS
+breakage, the real DS record can be published on the parent zone and that
+concludes the actual DNSSEC deployment.
 
 Dry-run DNSSEC can further be used on already singed zones to test key
-rollovers. In this case a dry-run DS record for the future key is used next to
-the current DS record which itself needs to be also presented in the dry-run
-format. Validating resolvers that understand dry-run DNSSEC first try to
-validate with a dry-run DS before falling back to real DSes.
+rollovers.
+In this case a dry-run DS record for the future key is used next to the current
+DS record which itself needs to be also presented in the dry-run format.
+Validating resolvers that understand dry-run DNSSEC first try to validate with
+a dry-run DS before falling back to real DSes.
 
 For further end-to-end DNS testing, a new EDNS0 option code is introduced that
-a client can send along with a query to a validating resolver. This signals
-validating resolvers that the client has opted-in to DNSSEC errors for dry-run
-delegations. The resolver still uses DNS Error Reporting [@DNS-ERROR-REPORTING] for dry-run errors
-but instead of the insecure answer it provides the client with the SERVFAIL
-answer, same as with actual DNSSEC. These clients are called "wet-run clients".
+a client can send along with a query to a validating resolver.
+This signals validating resolvers that the client has opted-in to DNSSEC errors
+for dry-run delegations.
+The resolver still uses DNS Error Reporting [@DNS-ERROR-REPORTING] for dry-run
+errors but instead of the insecure answer it provides the client with the
+SERVFAIL answer, same as with actual DNSSEC.
+These clients are called "wet-run clients".
 
 
 # Terminology
@@ -145,9 +154,10 @@ TODO
 ## The dry-run DS structure {#dry-run-structure}
 
 The dry-run DS record is a normal DS record with updated semantics to allow for
-dry-run signaling to a validating resolver. The DS Type Digest Algorithm value
-MUST be TBD (DRY-RUN). The first octet of the DS Digest field contains the
-actual Type Digest Algorithm, followed by the actual Digest:
+dry-run signaling to a validating resolver.
+The DS Type Digest Algorithm value MUST be TBD (DRY-RUN).
+The first octet of the DS Digest field contains the actual Type Digest
+Algorithm, followed by the actual Digest:
 
 ~~~ ascii-art
                      1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 3 3
@@ -171,39 +181,40 @@ Algorithm MUST disregard the DS record as per [@RFC6840, see, section 5.2].
 ## DNSSEC Error Reporting {#dnssec-error-reporting}
 
 The main purpose of the dry-run DNSSEC proposal is to be able to monitor
-potential DNS breakage when adopting DNSSEC for a zone. The main tool to do
-that is DNS Error Reporting [@DNS-ERROR-REPORTING].
+potential DNS breakage when adopting DNSSEC for a zone.
+The main tool to do that is DNS Error Reporting [@DNS-ERROR-REPORTING].
 
 Operators that want to use dry-run DNSSEC SHOULD support DNSSEC Error Reporting
 and have a reporting agent in place to receive the error reports.
 
 Implementations that support dry-run DNSSEC MUST also support DNSSEC Error
-Reporting and report any DNSSEC errors for the dry-run zone to the
-designated report agent.
+Reporting and report any DNSSEC errors for the dry-run zone to the designated
+report agent.
 
 ## Parent zone records {#parent-zone-records}
 
-The only change that needs to happen for dry-run DNSSEC is for the parent to
-be able to publish the dry-run DS record. If the parent accepts DS records from
-the child, the child needs to provide the dry-run DS record. If the parent does
-not accept DS records and generates the DS records from the DNSKEY, support for
-generating the dry-run DS record, when needed, should be added to the parent if
-dry-run DNSSEC is a desirable feature.
+The only change that needs to happen for dry-run DNSSEC is for the parent to be
+able to publish the dry-run DS record.
+If the parent accepts DS records from the child, the child needs to provide the
+dry-run DS record.
+If the parent does not accept DS records and generates the DS records from the
+DNSKEY, support for generating the dry-run DS record, when needed, should be
+added to the parent if dry-run DNSSEC is a desirable feature.
 
 When the child zone operator wants to complete the DNSSEC deployment, the
 parent needs to be notified for the real DS record.
 
 ### CDS and CDNSKEY Consideration {#cds-cdnskey-consideration}
 
-CDS works as expected by providing the dry-run DS content for the CDS
-record. CDNSKEY cannot work by itself; it needs to be accompanied by the
-aforementioned CDS to signal dry-run DNSSEC for the delegation. Thus, parents
-that rely only on CDNSKEY need to add support for checking the accompanying CDS
-record for the DRY-RUN DS Type Digest Algorithm and generating a dry-run DS
-record.
+CDS works as expected by providing the dry-run DS content for the CDS record.
+CDNSKEY cannot work by itself; it needs to be accompanied by the aforementioned
+CDS to signal dry-run DNSSEC for the delegation.
+Thus, parents that rely only on CDNSKEY need to add support for checking the
+accompanying CDS record for the DRY-RUN DS Type Digest Algorithm and generating
+a dry-run DS record.
 
-Operators of a dry-run child zone are advised to publish both CDS and
-CDNSKEY so that both cases above are covered.
+Operators of a dry-run child zone are advised to publish both CDS and CDNSKEY
+so that both cases above are covered.
 
 ## dry-run DS and real DS coexistence {#dry-run-realDS-coexistence}
 
@@ -227,9 +238,10 @@ for example testing key rollover.
 ## wet-run clients {#wet-run-clients}
 
 Wet-run clients are clients that send the EDNS0 option code TBD (Wet-Run
-DNSSEC) when querying a validating resolver. These clients opt-in to receive
-error responses in case of DNSSEC errors in a dry-run zone. They allow for
-end-to-end DNSSEC testing in a controlled environment.
+DNSSEC) when querying a validating resolver.
+These clients opt-in to receive error responses in case of DNSSEC errors in a
+dry-run zone.
+They allow for end-to-end DNSSEC testing in a controlled environment.
 
 Validating resolvers that recognise the option MUST respond with the error that
 they would normally respond for a DNSSEC zone and MUST attach the same EDNS0
@@ -244,33 +256,34 @@ the validating resolver as per [@!RFC8914].
 
 TODO
 tldr; validating resolvers need to keep an additional DNSSEC status for cached
-records that notes the DNSSEC status for the dry-run part. Responses can then
-be provided based on the Wet-Run DNSSEC EDNS0 option.
+records that notes the DNSSEC status for the dry-run part.
+Responses can then be provided based on the Wet-Run DNSSEC EDNS0 option.
 
 
 # Security Considerations {#security}
 
 Dry-run DNSSEC disables one of the fundamental guarantees of DNSSEC, data
-integrity. Bogus answers for expired/invalid data will become insecure
-answers providing the potentially wrong information back to the requester. This
-is a feature of this proposal but it also allows forged answers by third
-parties to still affect the zone. This should be treated as a warning that
-dry-run DNSSEC is not an end solution but rather a temporarily intermediate
-test step of a zone going secure.
+integrity.
+Bogus answers for expired/invalid data will become insecure answers providing
+the potentially wrong information back to the requester.
+This is a feature of this proposal but it also allows forged answers by third
+parties to still affect the zone.
+This should be treated as a warning that dry-run DNSSEC is not an end solution
+but rather a temporarily intermediate test step of a zone going secure.
 
 Parent zones that provide signed delegations to child zones should be aware
 that by using dry-run DNSSEC (e.g., testing a key roll to a stronger algorithm
-key) they risk the DNSSEC status of the child zones. If the trust chain becomes
-invalid between parent and child because of dry-run DNSSEC the child zone will
-be treated as insecure.
+key) they risk the DNSSEC status of the child zones.
+If the trust chain becomes invalid between parent and child because of dry-run
+DNSSEC the child zone will be treated as insecure.
 
 
 # IANA Considerations
 
 ## DRY-RUN DS Type Digest Algorithm
 
-This document defines a new entry in the "Delegation Signer (DS) Resource Record (RR) Type Digest
-Algorithms" registry:
+This document defines a new entry in the "Delegation Signer (DS) Resource
+Record (RR) Type Digest Algorithms" registry:
 
 Value | Digest Type | Status   | Reference
 -----:|-------------|----------|----------------
@@ -279,7 +292,8 @@ TBD   | DRY-RUN     | OPTIONAL | [this document]
 
 ## Wet-Run EDNS0 Option
 
-This document defines a new entry in the "DNS EDNS0 Option Codes (OPT)" registry on the "Domain Name System (DNS) Parameters" page:
+This document defines a new entry in the "DNS EDNS0 Option Codes (OPT)"
+registry on the "Domain Name System (DNS) Parameters" page:
 
 
 Value | Name           | Status   | Reference

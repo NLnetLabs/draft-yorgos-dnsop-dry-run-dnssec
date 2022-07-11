@@ -58,7 +58,7 @@ It accomplishes that by introducing a new DS Type Digest Algorithm that signals
 validating resolvers that dry-run DNSSEC is used for the zone.
 DNSSEC errors are then reported with DNS Error Reporting, but any bogus
 responses to clients are withheld.
-Instead validating resolvers fallback from dry-run DNSSEC and provide the
+Instead, validating resolvers fallback from dry-run DNSSEC and provide the
 response that would have been answered without the presence of a dry-run DS.
 A further option is presented for clients to opt-in for dry-run DNSSEC errors
 and allow for end-to-end DNSSEC testing.
@@ -315,10 +315,10 @@ support by dry-run resolvers).
   signalling. Petr's proposal: Why not have a range of RR types for which the
   parent is authoritative (like DS, and what NS should have been).
 
-  This could work for Dry-run, we could have a DDS RR type which would have the
+- This could work for Dry-run, we could have a DDS RR type which would have the
   same rdata as DS, but then signals Dry-run.
 
-  We like it, but it creates another dependency for all these drafts (including
+- We like it, but it creates another dependency for all these drafts (including
   ours) to progress.
 
 ## The dry-run DS structure {#dry-run-ds-structure}
@@ -452,7 +452,7 @@ Record (RR) Type Digest Algorithms" registry:
 
 Value | Digest Type     | Status   | Reference
 -----:|-----------------|----------|----------------
-TBD   | SHA-256 DRY_RUN | OPTIONAL | [this document]
+TBD   | SHA-256 DRY-RUN | OPTIONAL | [this document]
 
 
 ## Wet-Run EDNS0 Option

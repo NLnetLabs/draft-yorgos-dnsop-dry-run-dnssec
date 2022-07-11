@@ -120,6 +120,10 @@ dry-run zone
 : A zone that is DNSSEC signed but uses a dry-run DS to signal the use of the
   dry-run DNSSEC method.
 
+dry-run parent zone
+: A zone that supports dry-run DNSSEC for its delegation, that is support for
+  publishing the dry-run DS.
+
 dry-run resolver
 : A validating resolver that supports dry-run DNSSEC.
 
@@ -199,7 +203,7 @@ The zone is treated as insecure, yielding insecure responses of the DNS data.
 
 This use case can test a completely different DNSSEC configuration for an
 already signed zone.
-The zone is doubly signed and there are two DS RRs in the parent zone.
+The zone is doubly signed and there are at least two DS RRs in the parent zone.
 Dry-run resolvers try to use the dry-run part of the zone.
 In case of validation errors they fallback to the real DS and restart
 validation which may or may not lead to further validation errors depending on
@@ -215,7 +219,7 @@ Normal key rollover procedures can continue by introducing the new key as
 another dry-run DS record.
 In case of validation errors, dry-run resolvers fallback to the real DS and
 restart validation.
-When testing was succesful, the same exact procedure can be followed by
+When testing was successful, the same exact procedure can be followed by
 replacing the dry-run DS steps with real DSes.
 
 A special key rollover case could be for the root.
@@ -244,17 +248,43 @@ the validating resolver as per [@!RFC8914].
 
 # Signaling {#signaling}
 
-yorgos: I have attached the relevant feedback here but the section needs work.
-        I believe we need to suggest/document either our current plan (single
-        DS digest type for dry-run) or burn a bit so that each digest type has
-        a dry-run counterpart.  Althought there are a lot of DS hacks that need
-        to convey information about the delegation, I find the dry-run DS logic
-        to be tightly coupled with the actual DS record. So it is not a hack
-        per say but an addition to the DS information.
+Signaling to dry-run resolvers that a delegation uses dry-run DNSSEC happens
+naturally with the DS record returned from the parent zone by specifying new
+DS Digest Type Algorithm(s).
+
+The current version of the document describes two different timelines: one
+where a single DS Digest Type Algorithm is introduced and one where multiple DS
+Digest Type Algorithms are introduced.
+
+For the single timeline, the algorithm specifies the use of dry-run DNSSEC for
+the zone.
+The actual DS Digest Type Algorithm is encoded in the first byte of the RDATA.
+This results in variable length DS RDATA in relation to the DS Digest Type
+Algorithm and is discussed further in (#provisioning).
+For more information about the record see (#dry-run-ds-structure).
+
+For the multiple timeline, each algorithm has a potential dry-run equivalent.
+This can be realised by either burning a bit in the DS Digest Type Algorithm,
+so that all current and future algorithms have a dry-run DNSSEC equivalent, or
+by explicitly specifying algorithms for each current and future algorithm.
+The current convention for this document is to specify a new one for SHA-256
+only at the moment.
+
+In all timelines, resolvers that do not support dry-run DNSSEC and have no
+knowledge of the introduced DS Digest Type Algorithms ignore it as per
+[@!RFC6840, see, section 5.2].
 
 ## Feedback from IETF 113
 
 **Note to the RFC Editor**: please remove this entire section before publication.
+
+This is addressed feedback as a result of IETF 113. We keep it here for future
+reference while the document is advancing.
+
+We currently have settled for augmenting the DS with information regarding
+dry-run DNSSEC by specifying additional DS Digest Type(s) which does not affect
+current logic in the name servers and resolvers alike (except from the added
+support by dry-run resolvers).
 
 ### Hash is created from DNSKEY (or CDNSKEY)
 
@@ -270,6 +300,11 @@ yorgos: I have attached the relevant feedback here but the section needs work.
 - From Ben Schwartz
 
 - To avoid polluting the digest type space with all the different ideas.
+
+- Although there are a lot of DS hacks that need to convey information about
+  the delegation, we find the dry-run DS logic to be tightly coupled with the
+  actual DS record. So it is not a hack per say but an addition to the DS
+  information.
 
 - Sure, it will be another draft dependency then. Personally we'd prefer Petr's
   idea (see below).
@@ -288,8 +323,7 @@ yorgos: I have attached the relevant feedback here but the section needs work.
 
 ## The dry-run DS structure {#dry-run-ds-structure}
 
-yorgos: this is for the single DS digest type. This section can be removed if
-        we go for the burned bit approach.
+This is only relevant for the single timeline as described in (#signaling).
 
 The dry-run DS record is a normal DS record with updated semantics to allow for
 dry-run signaling to a validating resolver.
@@ -309,7 +343,7 @@ Algorithm, followed by the actual Digest:
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~
 
-Validating resolvers encountering such a DS record will know to mark this
+Dry-run resolvers encountering such a DS record will know to mark this
 delegation as dry-run DNSSEC and extract the actual Type Digest Algorithm and
 Digest from the dry-run DS Digest field.
 
@@ -319,19 +353,40 @@ Algorithm MUST disregard the DS record as per [@!RFC6840, see, section 5.2].
 
 # Provisioning {#provisioning}
 
-yorgos: I have attached the relevant feedback here but the section needs work.
+This section discusses the communication between a dry-run DNSSEC zone and the
+parent domain and the procedures that need to be in place in order for the
+parent to publish a dry-run DS record for the delegation.
+Most of the burden falls with the parent zone since they have to understand the
+delegation's intent for use of dry-run DNSSEC.
+If the parent does not accept DS records, they need to provide a means so that
+the child can mark the DNSKEY(s) as dry-run DNSSEC.
+This can be achieved either by a flag on the parent's interface, or their
+willingness to accept and inspect DS records that accompany DNSKEYs for use of
+the DRY-RUN DS Type Digest Algorithm.
+The case of CDS/CDNSKEY is discussed below.
+
+One issue in the single timeline is that the DS record will have variable
+length RDATA for the single defined DS Digest Type Algorithm and that could
+trigger parsing errors on the registrars.
+This is the main reason for the multiple timeline existence.
+This is something that could be addressed by the registrars and allow for the
+single timeline.
 
 ## Feedback from IETF 113
 
 **Note to the RFC Editor**: please remove this entire section before publication.
 
+This is addressed feedback as a result of IETF 113. We keep it here for future
+reference while the document is advancing.
+
 ### Registry supports only fixed sized hashes per hash algorithm
 
 - Feedback from Gavin from CentralNic.
 
-- We could also have a dry-run hash algorithm per DS algorithm.
+- We could also have a dry-run hash algorithm per DS algorithm; this is
+  presented in (#signaling).
 
-  - disadvantage burn hash algorithms twice as fast
+- Disadvantage burn hash algorithms twice as fast.
 
 - Registries could also just change this rule for dry-run.
 
@@ -347,7 +402,7 @@ DNSKEY, support for generating the dry-run DS record, when needed, should be
 added to the parent if dry-run DNSSEC is a desirable feature.
 
 When the child zone operator wants to complete the DNSSEC deployment, the
-parent needs to be notified for the real DS record.
+parent needs to be notified for the real DS record publication.
 
 ### CDS and CDNSKEY Consideration {#cds-cdnskey-consideration}
 
@@ -356,7 +411,7 @@ CDNSKEY cannot work by itself; it needs to be accompanied by the aforementioned
 CDS to signal dry-run DNSSEC for the delegation.
 Thus, parents that rely only on CDNSKEY need to add support for checking the
 accompanying CDS record for the DRY-RUN DS Type Digest Algorithm and generating
-a dry-run DS record.
+a dry-run DS record if such a record is encountered.
 
 Operators of a dry-run child zone are advised to publish both CDS and CDNSKEY
 so that both cases above are covered.
@@ -378,12 +433,26 @@ but rather a temporarily intermediate test step of a zone going secure.
 
 ## DRY-RUN DS Type Digest Algorithm
 
+The changes needed for either the single timeline or multiple timeline as
+described in (#signaling).
+
+### Single timeline
+
 This document defines a new entry in the "Delegation Signer (DS) Resource
 Record (RR) Type Digest Algorithms" registry:
 
 Value | Digest Type | Status   | Reference
 -----:|-------------|----------|----------------
 TBD   | DRY-RUN     | OPTIONAL | [this document]
+
+### Multiple timeline
+
+This document defines a new entry in the "Delegation Signer (DS) Resource
+Record (RR) Type Digest Algorithms" registry:
+
+Value | Digest Type     | Status   | Reference
+-----:|-----------------|----------|----------------
+TBD   | SHA-256 DRY_RUN | OPTIONAL | [this document]
 
 
 ## Wet-Run EDNS0 Option
@@ -421,7 +490,7 @@ signed zone also as a dry-run DS in order to facilitate testing key rollovers.
 In the following implementation status descriptions, "dry-run DNSSEC" refers
 to dry-run DNSSEC as described in this document.
 
-* TODO
+None yet.
 
 
 # Change History
@@ -431,3 +500,7 @@ to dry-run DNSSEC as described in this document.
 * draft-yorgos-dnsop-dry-run-dnssec-00
 
 > Initial public draft.
+
+* draft-yorgos-dnsop-dry-run-dnssec-01
+
+> Document restructure and feedback incorporation from IETF 113.

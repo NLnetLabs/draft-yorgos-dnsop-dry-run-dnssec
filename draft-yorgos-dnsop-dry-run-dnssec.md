@@ -19,7 +19,7 @@ surname = "Thessalonikefs"
 fullname = "Yorgos Thessalonikefs"
 organization = "NLnet Labs"
 [author.address]
- email = "george@nlnetlabs.nl"
+ email = "yorgos@nlnetlabs.nl"
 [author.address.postal]
  street = "Science Park 400"
  city = "Amsterdam"

@@ -255,7 +255,7 @@ This could be implicit with dry-run support with no explicit EDNS0 option.
 
 ### EDNS0 Option Specification
 
-This method uses an EDNS0 [!RFC6891] option to indicate that the domain would
+This method uses an EDNS0 [@!RFC6891] option to indicate that the domain would
 like to receive NOERROR reports.
 The option is structured as follows:
 

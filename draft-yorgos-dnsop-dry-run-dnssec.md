@@ -52,16 +52,17 @@ organization = "ICANN"
 .# Abstract
 
 This document describes a method called "dry-run DNSSEC" that allows for
-testing DNSSEC deployments without affecting the DNS service in case of
-DNSSEC errors.
-It accomplishes that by introducing a new DS Type Digest Algorithm that signals
-validating resolvers that dry-run DNSSEC is used for the zone.
+testing DNSSEC deployments without affecting the DNS service in case of DNSSEC
+errors.
+It accomplishes that by introducing new DS Type Digest Algorithms that when
+used in a DS record,  referred to as dry-run DS, signal to validating resolvers
+that dry-run DNSSEC is used for the zone.
 DNSSEC errors are then reported with DNS Error Reporting, but any bogus
 responses to clients are withheld.
 Instead, validating resolvers fallback from dry-run DNSSEC and provide the
 response that would have been answered without the presence of a dry-run DS.
-A further option is presented for clients to opt-in for dry-run DNSSEC errors
-and allow for end-to-end DNSSEC testing.
+A further EDNS option is presented for clients to opt-in for dry-run DNSSEC
+errors and allow for end-to-end DNSSEC testing.
 
 
 {mainmatter}
@@ -85,15 +86,17 @@ zone operators.
 
 This document describes a method called "dry-run DNSSEC" that builds upon the
 two aforementioned efforts and gives confidence to operators to adopt DNSSEC by
-introducing a new DS Type Digest Algorithm.
+enabling production testing of a DNSSEC zone.
+This is accomplished by introducing new DS Type Digest Algorithms.
 The zone operator signs the zone and makes sure that the DS record published on
 the parent side uses the specific DS Type Digest Algorithm.
-Validating resolvers that don't support the DS Type Digest algorithm ignore it
+Validating resolvers that don't support the DS Type Digest algorithms ignore it
 as per [@!RFC6840, see, section 5.2].
 Validating resolvers that do support dry-run DNSSEC make use of [@!RFC8914] and
 [@!RFC9567] to report any DNSSEC errors to the zone operator.
 If a DNSSEC validation error was due to dry-run DNSSEC, validation restarts by
-ignoring the dry-run DS in order to give the real DNS response to the client.
+ignoring the dry-run DS in order to give the real DNS/DNSSEC response to the
+client.
 
 This allows real world testing with resolvers that support dry-run DNSSEC
 by reporting DNSSEC feedback, without breaking DNS resolution for the domain
@@ -134,12 +137,21 @@ wet-run client
 
 # Overview {#overview}
 
+Dry-run DNSSEC builds upon three previous experiences namely DMARC [@!RFC7489],
+Root Key Trust Anchor Sentinel [@!RFC8509] and Signaling Trust Anchor Knowledge
+[@!RFC8145].
+The former enabled email operators to verify their configuration with real
+email servers by getting DMARC reports and understanding the impact on email
+delivery their configuration would have before committing to enable DMARC.
+Experience with the latter two showed that with only a small, up to date
+resolver population, the signaling is already quite substantial.
+
 Dry-run DNSSEC offers zone operators the means to test newly signed zones and
 a turn-key action to conclude testing and commit to the tested DNSSEC records.
 Operators that want to use dry-run DNSSEC SHOULD support [@!RFC9567] and have a
 reporting agent in place to receive the error reports.
 
-The only change from normal operations when signining a zone with dry-run
+The only change from normal operations when signing a zone with dry-run
 DNSSEC is to not publish the real DS record on the parent but publish the
 dry-run DS record instead.
 See (#signaling) for more information on the dry-run DS record itself, and
@@ -149,8 +161,8 @@ Validating resolvers that don't support the DS Type Digest algorithm ignore it
 as per [@!RFC6840, see, section 5.2].
 Validating resolvers that support dry-run DNSSEC are signaled to treat the
 zone as a dry-run zone.
-Validating resolvers that support dry-run DNSSEC MUST support
-[@!RFC9567].
+Validating resolvers that support dry-run DNSSEC SHOULD support [@!RFC9567] in
+order to report possible errors back to the operators.
 
 Valid answers as a result of dry-run validation yield authentic data (AD)
 responses and clients that expect the AD flag can already benefit from the
@@ -160,7 +172,7 @@ Invalid answers yield the response that would have been answered when no
 dry-run DS would have been present in the parent instead of SERVFAIL.
 For zones that had only dry-run DS RRs in the parent, an invalid answer yields
 an insecure response.
-This is not proper data integrity but the delegation should not be considered
+This is not proper data integrity but the delegation SHOULD NOT be considered
 DNSSEC signed at this point.
 For zones that had other non dry-run DS RRs in the parent, validation MUST
 restart by using those RRs instead.
@@ -171,8 +183,8 @@ This helps with monitoring potential DNS breakage when testing a DNSSEC
 configuration for a zone.
 This is also the main purpose of dry-run DNSSEC.
 
-The signed zone is publicly deployed but DNSSEC configuration errors cannot
-break DNS resolution yet.
+The newly signed zone is publicly deployed but DNSSEC configuration errors
+cannot break DNS resolution yet.
 DNS Error Reports can pinpoint potential issues back to the operator.
 When the operator is confident that the DNSSEC configuration under test does
 not introduce DNS breakage, the turn-key action to conclude testing and commit
@@ -193,10 +205,11 @@ complete validation.
 This use case tests DNSSEC adoption for an insecure zone.
 The zone is signed and a single dry-run DS record is published on the parent.
 Validation errors yield error reports but invalid answers do not result in
-SERVFAIL responses to the clients.
+SERVFAIL responses to clients.
 In the absence of real DS records, resolvers fallback to no DS records for the
 zone.
-The zone is treated as insecure, yielding insecure responses of the DNS data.
+Essentially treating the zone as insecure, the same as before the dry-run DS
+publication.
 
 ### Experimental DNSSEC configuration {#experimental-dnssec-configuration}
 
@@ -226,24 +239,100 @@ This can be made possible by specifying the dry-run DS Digest Type in the
 <DigestType> element in http://data.iana.org/root-anchors/root-anchors.xml or a
 different way of indicating in the xml file.
 
+## NOERROR report {#no-error}
+
+This section is WIP (more/clearer text that conveys the following)
+
+We need NOERROR reporting.
+The upstream can send the unsolicited TBD_no EDNS option back next to the
+Report-Channel (18) EDNS0 option from [@!RFC9567].
+In case of no real error reports we could at least be comfortable that support
+is out there and nothing is wrong (yet).
+Privacy concerns of identifying resolvers are the same as with an upstream that
+purposely serves bogus data with dry-run DNSSEC and/or DNS Error Reporting.
+Ultimate choice up to the resolver operator.
+This could be implicit with dry-run support with no explicit EDNS0 option.
+
+### EDNS0 Option Specification
+
+This method uses an EDNS0 [@!RFC6891] option to indicate that the domain would
+like to receive NOERROR reports.
+The option is structured as follows:
+
+~~~ ascii-art
+                     1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 3 3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|        OPTION-CODE = 18       |       OPTION-LENGTH           |
++---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+~~~
+
+Field definition details:
+
+OPTION-CODE
+: 2 octets; an EDNS0 code that is used in an EDNS0 option to indicate
+  willingness to receive NOERROR reports. The name for this EDNS0 option code
+  is Dry-Run NOERROR.
+
+OPTION-LENGTH
+: 2 octets; 0 value as this option has no content.
+
+### Feedback from IETF 114
+
+**Note to the RFC Editor**: please remove this entire section before publication.
+
+This is addressed feedback as a result of IETF 114. We keep it here for future
+reference while the document is advancing.
+
+#### What is the error rate
+
+- Feedback by Ben Schwartz.
+
+- During IETF 114 and based on this draft, DNS Error Reporting had a flag in
+  its specification that allowed domains to signal resolvers that they would
+  like to receive NOERROR reports. This would have helped identify that
+  resolvers that see and support the option are out there but there are no
+  errors to report.
+
+- The NOERROR report is now part of this specification.
+
 ## Opt-in end-to-end DNSSEC testing {#opt-in}
 
-For further end-to-end DNS testing, a new EDNS0 option code TBD (Wet-Run
+For further end-to-end DNS testing, a new EDNS0 option code TBD_w (Wet-Run
 DNSSEC) is introduced that a client can send along with a query to a validating
 resolver.
 This signals dry-run resolvers that the client has opted-in to DNSSEC errors
 for dry-run zones.
 Dry-run resolvers that support opt-in MUST respond with the dry-run DNSSEC
-error if any and MUST attach the same EDNS0 option code TBD in the response to
-mark the error response as coming from a dry-run zone.
+error if any and MUST attach the same EDNS0 option code TBD_w in the response
+to mark the error response as coming from a dry-run zone.
 
 Dry-run resolvers that support opt-in MUST cache the DNSSEC status of the
 dry-run validation next to the actual DNSSEC status.
 This enables cached answers to both regular and opt-in clients, similar to
-cached answers to clients with and without the CD-bit set.
+cached answers to clients with and without the CD flag set.
 
 Additional Extended DNS Errors can still be attached in the error response by
 the validating resolver as per [@!RFC8914].
+
+Dry-run resolvers that do not support opt-in MUST ignore the TBD_w EDNS0
+option and MUST NOT attach the TBD_w EDNS0 option code in their replies.
+
+### Feedback from IETF 114
+
+**Note to the RFC Editor**: please remove this entire section before publication.
+
+This is addressed feedback as a result of IETF 114. We keep it here for future
+reference while the document is advancing.
+
+#### Client can send its own trust anchor (DS) with an EDNS0 option to resolver instead
+
+- Feedback by Nils Wisiol.
+
+- This is way more complex since it won't work for cached answers and will need
+  to restart validation for that particular client query and probably also not
+  cache the result. Other clients with the same query (but no EDNS0 DS) must
+  not be mixed with whatever is happening with the injected trust anchor.
 
 
 # Signaling {#signaling}
@@ -252,103 +341,57 @@ Signaling to dry-run resolvers that a delegation uses dry-run DNSSEC happens
 naturally with the DS record returned from the parent zone by specifying new
 DS Digest Type Algorithm(s).
 
-The current version of the document describes two different timelines: one
-where a single DS Digest Type Algorithm is introduced and one where multiple DS
-Digest Type Algorithms are introduced.
+Each algorithm has a potential dry-run equivalent.
+This can be realised by either burning a bit in the DS Digest Type Algorithm
+(the most significant bit) so that all current and future algorithms have a
+dry-run DNSSEC equivalent, or by explicitly specifying algorithms for select
+current and future algorithms.
+The convention for this document is to only specify a new one for SHA-256 at
+the moment; this will likely change in a future version.
 
-For the single timeline, the algorithm specifies the use of dry-run DNSSEC for
-the zone.
-The actual DS Digest Type Algorithm is encoded in the first byte of the RDATA.
-This results in variable length DS RDATA in relation to the DS Digest Type
-Algorithm and is discussed further in (#provisioning).
-For more information about the record see (#dry-run-ds-structure).
-
-For the multiple timeline, each algorithm has a potential dry-run equivalent.
-This can be realised by either burning a bit in the DS Digest Type Algorithm,
-so that all current and future algorithms have a dry-run DNSSEC equivalent, or
-by explicitly specifying algorithms for each current and future algorithm.
-The current convention for this document is to specify a new one for SHA-256
-only at the moment.
-
-In all timelines, resolvers that do not support dry-run DNSSEC and have no
-knowledge of the introduced DS Digest Type Algorithms ignore it as per
+Resolvers that do not support dry-run DNSSEC and have no knowledge of the
+introduced DS Digest Type Algorithms ignore them as per
 [@!RFC6840, see, section 5.2].
 
-## Feedback from IETF 113
+## Feedback from IETF 114
 
 **Note to the RFC Editor**: please remove this entire section before publication.
 
-This is addressed feedback as a result of IETF 113. We keep it here for future
+This is addressed feedback as a result of IETF 114. We keep it here for future
 reference while the document is advancing.
 
-We currently have settled for augmenting the DS with information regarding
-dry-run DNSSEC by specifying additional DS Digest Type(s) which does not affect
-current logic in the name servers and resolvers alike (except from the added
-support by dry-run resolvers).
+### Burn a bit for dry-run DS Digest Type Algorithms
 
-### Hash is created from DNSKEY (or CDNSKEY)
+- Viktor Dukhovni: 
+  - Saner than variable variant.
+  - Hash algorithms are introduced exceedingly rarely, symmetric hashes are
+    very stable.
+  - No evidence that SHA2 will be compromised in the next 100 years; we may
+    have SHA3 at some point but little demand.
 
-- Feedback from Gavin Brown from CentralNIC.
+- Peter Thomassen:
+  - Better to sacrifice a bit than variable length. Also for post quantum
+    crypto, in response to Paul Hoffman below, even if keys are large the hash
+    value will have a constant length.
 
-- DNSKEYs do have space for flags which are ignored. There was a suggestion to
-  use the flags in the DNSKEY to signal Dry-run, but we do not like it, because
-  it makes the move to actual DNSSEC impossible without also changing the
-  DNSKEY RRset.
+- Libor Peltan: (mailing list)
+  - Only a few code points in use now, it seems viable.
 
-### Idea: Have a general purpose DS Digest Type for signaling
+### Use a single DS Digest Type Algorithm for dry-run
 
-- From Ben Schwartz
+- Need to encode the actual algorithm and data in the DS record; results in
+  variable length DS record for a single algorithm.
 
-- To avoid polluting the digest type space with all the different ideas.
+- May hinder adoption due to EPP checks/requirements (known record length for
+  each algorithm).
 
-- Although there are a lot of DS hacks that need to convey information about
-  the delegation, we find the dry-run DS logic to be tightly coupled with the
-  actual DS record. So it is not a hack per say but an addition to the DS
-  information.
+- Mark Andrews:
+  - Variable length will be needed for private algorithm types so we may as
+    well support it here.
 
-- Sure, it will be another draft dependency then. Personally we'd prefer Petr's
-  idea (see below).
-
-### Idea from Petr: Normalize the different DS hacks
-
-- There are now several drafts on hold because they want to "misuse" DS for
-  signalling. Petr's proposal: Why not have a range of RR types for which the
-  parent is authoritative (like DS, and what NS should have been).
-
-- This could work for Dry-run, we could have a DDS RR type which would have the
-  same rdata as DS, but then signals Dry-run.
-
-- We like it, but it creates another dependency for all these drafts (including
-  ours) to progress.
-
-## The dry-run DS structure {#dry-run-ds-structure}
-
-This is only relevant for the single timeline as described in (#signaling).
-
-The dry-run DS record is a normal DS record with updated semantics to allow for
-dry-run signaling to a validating resolver.
-The DS Type Digest Algorithm value MUST be TBD (DRY-RUN).
-The first octet of the DS Digest field contains the actual Type Digest
-Algorithm, followed by the actual Digest:
-
-~~~ ascii-art
-                     1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 3 3
- 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|           Key Tag             |  Algorithm    |    DRY-RUN    |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| Digest Type   |                                               /
-+-+-+-+-+-+-+-+-+            Digest                             /
-/                                                               /
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-~~~
-
-Dry-run resolvers encountering such a DS record will know to mark this
-delegation as dry-run DNSSEC and extract the actual Type Digest Algorithm and
-Digest from the dry-run DS Digest field.
-
-Validating resolvers that have no knowledge for the DRY-RUN DS Type Digest
-Algorithm MUST disregard the DS record as per [@!RFC6840, see, section 5.2].
+- Paul Hoffman:
+  - Recommends going to variable length to pave the way for post quantum crypto
+    and the surprising length it may need.
 
 
 # Provisioning {#provisioning}
@@ -365,30 +408,22 @@ willingness to accept and inspect DS records that accompany DNSKEYs for use of
 the DRY-RUN DS Type Digest Algorithm.
 The case of CDS/CDNSKEY is discussed below.
 
-One issue in the single timeline is that the DS record will have variable
-length RDATA for the single defined DS Digest Type Algorithm and that could
-trigger parsing errors on the registrars.
-This is the main reason for the multiple timeline existence.
-This is something that could be addressed by the registrars and allow for the
-single timeline.
-
-## Feedback from IETF 113
+## Feedback from IETF 114
 
 **Note to the RFC Editor**: please remove this entire section before publication.
 
-This is addressed feedback as a result of IETF 113. We keep it here for future
+This is addressed feedback as a result of IETF 114. We keep it here for future
 reference while the document is advancing.
 
-### Registry supports only fixed sized hashes per hash algorithm
+### dry-run DS records could linger in the parent
 
-- Feedback from Gavin from CentralNic.
+- Feedback from Lars-Johan Liman.
 
-- We could also have a dry-run hash algorithm per DS algorithm; this is
-  presented in (#signaling).
+- Peter Thomassen:
+  - Registry or parent authority need to have a local policy to remove or not
+    dry-run records after a while.
 
-- Disadvantage burn hash algorithms twice as fast.
-
-- Registries could also just change this rule for dry-run.
+- We also think that no action is necessary for this document.
 
 
 ## Parent zone records {#parent-zone-records}
@@ -425,35 +460,34 @@ Bogus answers for expired/invalid data will become insecure answers providing
 the potentially wrong information back to the requester.
 This is a feature of this proposal but it also allows forged answers by third
 parties to affect the zone.
+
 This should be treated as a warning that dry-run DNSSEC is not an end solution
 but rather a temporarily intermediate test step of a zone going secure.
+
+Thus, a dry-run only zone (only dry-run DSes on the parent) SHOULD NOT be
+considered as DNSSEC signed since it does not offer all the DNSSEC guarantees.
 
 
 # IANA Considerations
 
 ## DRY-RUN DS Type Digest Algorithm
 
-The changes needed for either the single timeline or multiple timeline as
-described in (#signaling).
-
-### Single timeline
-
 This document defines a new entry in the "Delegation Signer (DS) Resource
 Record (RR) Type Digest Algorithms" registry:
 
-Value | Digest Type | Status   | Reference
------:|-------------|----------|----------------
-TBD   | DRY-RUN     | OPTIONAL | [this document]
+Value    | Digest Type     | Status   | Reference
+--------:|-----------------|----------|----------------
+TBD_ds   | SHA-256 DRY-RUN | OPTIONAL | [this document]
 
-### Multiple timeline
+## Dry-Run NOERROR EDNS0 Option
 
-This document defines a new entry in the "Delegation Signer (DS) Resource
-Record (RR) Type Digest Algorithms" registry:
+This document defines a new entry in the "DNS EDNS0 Option Codes (OPT)"
+registry on the "Domain Name System (DNS) Parameters" page:
 
-Value | Digest Type     | Status   | Reference
------:|-----------------|----------|----------------
-TBD   | SHA-256 DRY-RUN | OPTIONAL | [this document]
 
+Value    | Name            | Status   | Reference
+--------:|-----------------|----------|----------------
+TBD_no   | Dry-Run NOERROR | Optional | [this document]
 
 ## Wet-Run EDNS0 Option
 
@@ -461,9 +495,10 @@ This document defines a new entry in the "DNS EDNS0 Option Codes (OPT)"
 registry on the "Domain Name System (DNS) Parameters" page:
 
 
-Value | Name           | Status   | Reference
------:|----------------|----------|----------------
-TBD   | Wet-Run DNSSEC | Optional | [this document]
+Value     | Name           | Status   | Reference
+---------:|----------------|----------|----------------
+TBD_wet   | Wet-Run DNSSEC | Optional | [this document]
+
 
 # Acknowledgements
 
@@ -495,3 +530,9 @@ None yet.
 * draft-yorgos-dnsop-dry-run-dnssec-01
 
 > Document restructure and feedback incorporation from IETF 113.
+
+* draft-yorgos-dnsop-dry-run-dnssec-02
+
+> Document restructure and feedback incorporation from IETF 114; mainly:
+> Use explicit dry-run algorithm types for DS.
+> Introduce NOERROR reporting.

@@ -14,7 +14,7 @@ $(DOCNAME)-$(VERSION).html: $(DOCNAME).xml
 
 $(DOCNAME).xml: $(DOCNAME).md prereq
 	sed -e 's/@DOCNAME@/$(DOCNAME)-$(VERSION)/g' \
-	    -e 's/@TODAY@/${today}/g'  $< | ~/my_bin/mmark > $@ || rm -f $@
+	    -e 's/@TODAY@/${today}/g'  $< | mmark > $@ || rm -f $@
 
 prereq:
 	@echo "Checking prerequisites..."

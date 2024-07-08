@@ -533,4 +533,6 @@ None yet.
 
 * draft-yorgos-dnsop-dry-run-dnssec-02
 
-> Document restructure and feedback incorporation from IETF 114.
+> Document restructure and feedback incorporation from IETF 114; mainly:
+> Use explicit dry-run algorithm types for DS.
+> Introduce NOERROR reporting.

@@ -241,17 +241,52 @@ different way of indicating in the xml file.
 
 ## NOERROR report {#no-error}
 
-This section is WIP (more/clearer text that conveys the following)
+Dry-run DNSSEC relies on DNS Error Reporting [@!RFC9567] to report resolution
+errors back to the zone operators.
+DNS Error Reporting solely addresses the reporting of DNS errors but it does
+not give any guarantees that DNS Error Reporting aware resolvers are resolving
+the zone.
+This raises a concern especially for dry-run DNSSEC were absence of error
+reports needs to translate to a positive signal that no DNSSEC errors were
+encountered.
 
-We need NOERROR reporting.
-The upstream can send the unsolicited TBD_no EDNS option back next to the
-Report-Channel (18) EDNS0 option from [@!RFC9567].
-In case of no real error reports we could at least be comfortable that support
-is out there and nothing is wrong (yet).
-Privacy concerns of identifying resolvers are the same as with an upstream that
-purposely serves bogus data with dry-run DNSSEC and/or DNS Error Reporting.
-Ultimate choice up to the resolver operator.
-This could be implicit with dry-run support with no explicit EDNS0 option.
+To solve this, dry-run DNSSEC introduces the unsolicited TBD_no EDNS option
+that can be sent from authoritative name servers next to the Report-Channel
+(18) EDNS0 option from [@!RFC9567].
+With this option if no error was encountered during dry-run DNSSEC validation,
+dry-run DNSSEC aware resolvers can instead send a NOERROR report notifying the
+reporting agent of their presence.
+
+As with [@!RFC9567, see, section 4] the resolver will cache the reporting agent
+reply and dampen the number of NOERROR report queries.
+
+### Constructing the NOERROR Query {#no-error-query}
+The QNAME for the NOERROR report query follows the same semantics as with
+[@!RFC9567, see, section 6.1.1] and is constructed by concatenating the
+following elements:
+
+- A label containing the string "_er".
+
+- The decimal value "0" in a single DNS label as the QTYPE is not relevant for
+  the NOERROR report.
+
+- The list of non-null labels representing the apex of the query name that
+  triggered this report.
+
+- The decimal value "0" in a single DNS label as the Extended DNS Error is not
+  relevant for the NOERROR report.
+
+- A label containing the string "_er".
+
+- The agent domain. The agent domain as received in the EDNS0 Report-Channel
+  option set by the authoritative server.
+
+As with [@!RFC9567, see, section 6.1.1] if the QNAME of the report query
+exceeds 255 octets, it MUST NOT be sent.
+
+The apex is specifically used as the query name for resolvers to only send one
+NOERROR report (if applicable) per zone and for the monitoring agents to
+differentiate between different zones they are configured with.
 
 ### EDNS0 Option Specification
 

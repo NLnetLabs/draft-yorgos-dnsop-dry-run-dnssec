@@ -431,8 +431,34 @@ Since dry-run DNSSEC relies heavily on DNS Error Reporting [@!RFC9567], the
 same security considerations about the generated error reports apply here as
 well.
 Especially the use of TCP or DNS Cookies for the reports, which can be enforced
-by the monitoring agent to make it harder to falsify the source address.
+by the monitoring agent to make it harder to falsify the source address of
+error reports.
 
+## Workload increase {#security-workload}
+
+Dry-run resolvers need to do some extra work when encountered with a validation
+failure in a dry-run zone.
+They would need to send a DNS Error Report out and restart validation ignoring
+the dry-run DSes of the zone.
+
+Restarting the validation can lead to double the validation effort for use
+cases where the zone was already using DNSSEC, i.e., real DSes next to dry-run
+DSes.
+Dry-run resolver implementations need to consider this and allow for the same
+validation limits regardless if the validation is for a real DNSSEC or a
+dry-run DNSSEC zone, or a zone combining both.
+Keeping (and resetting) the same validation limits is crucial for failure
+reporting as it will realistically reflect the same behavior (and fail for the
+same reasons) as with non-dry-run resolvers.
+Furthermore, not imposing different limits on a dry-run resolver will not
+hamper the real DNSSEC part of the zone when fallback from dry-run needs to
+happen.
+The real DNSSEC part of the zone will have the chance to validate under the
+same workload limits and any previous dry-run validation workload will not
+result in manifested DNSSEC errors due to premature exhaustion of validation
+limits for example.
+Thus, on dry-run validation failures the validation workload limits MUST be
+reset and allow for the same workload limits when restarting validation.
 
 # IANA Considerations
 
@@ -514,3 +540,5 @@ None yet.
 > Ask for NOERROR Extended DNS Error.
 
 > Remove most IETF 114 feedback sections for better flow of the document; kept the discussion about signaling.
+
+> Add security considerations for increased validation workload.

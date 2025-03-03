@@ -287,25 +287,6 @@ The apex is specifically used as the query name for resolvers to only send one
 NOERROR report (if applicable) per zone and for the monitoring agents to
 differentiate between different zones they are configured with.
 
-### Feedback from IETF 114
-
-**Note to the RFC Editor**: please remove this entire section before publication.
-
-This is addressed feedback as a result of IETF 114. We keep it here for future
-reference while the document is advancing.
-
-#### What is the error rate
-
-- Feedback by Ben Schwartz.
-
-- During IETF 114 and based on this draft, DNS Error Reporting had a flag in
-  its specification that allowed domains to signal resolvers that they would
-  like to receive NOERROR reports. This would have helped identify that
-  resolvers that see and support the option are out there but there are no
-  errors to report.
-
-- The NOERROR report is now part of this specification.
-
 ## Opt-in end-to-end DNSSEC testing {#opt-in}
 
 For further end-to-end DNS testing, a new EDNS0 option code TBD_w (Wet-Run
@@ -328,23 +309,6 @@ the validating resolver as per [@!RFC8914].
 Dry-run resolvers that do not support opt-in MUST ignore the TBD_w EDNS0
 option and MUST NOT attach the TBD_w EDNS0 option code in their replies.
 
-### Feedback from IETF 114
-
-**Note to the RFC Editor**: please remove this entire section before publication.
-
-This is addressed feedback as a result of IETF 114. We keep it here for future
-reference while the document is advancing.
-
-#### Client can send its own trust anchor (DS) with an EDNS0 option to resolver instead
-
-- Feedback by Nils Wisiol.
-
-- This is way more complex since it won't work for cached answers and will need
-  to restart validation for that particular client query and probably also not
-  cache the result. Other clients with the same query (but no EDNS0 DS) must
-  not be mixed with whatever is happening with the injected trust anchor.
-
-
 # Signaling {#signaling}
 
 Signaling to dry-run resolvers that a delegation uses dry-run DNSSEC happens
@@ -363,7 +327,7 @@ Resolvers that do not support dry-run DNSSEC and have no knowledge of the
 introduced DS Digest Type Algorithms ignore them as per
 [@!RFC6840, see, section 5.2].
 
-## Feedback from IETF 114
+## Discussion from IETF 114
 
 **Note to the RFC Editor**: please remove this entire section before publication.
 
@@ -417,24 +381,6 @@ This can be achieved either by a flag on the parent's interface, or their
 willingness to accept and inspect DS records that accompany DNSKEYs for use of
 the DRY-RUN DS Type Digest Algorithm.
 The case of CDS/CDNSKEY is discussed below.
-
-## Feedback from IETF 114
-
-**Note to the RFC Editor**: please remove this entire section before publication.
-
-This is addressed feedback as a result of IETF 114. We keep it here for future
-reference while the document is advancing.
-
-### dry-run DS records could linger in the parent
-
-- Feedback from Lars-Johan Liman.
-
-- Peter Thomassen:
-  - Registry or parent authority need to have a local policy to remove or not
-    dry-run records after a while.
-
-- We also think that no action is necessary for this document.
-
 
 ## Parent zone records {#parent-zone-records}
 
@@ -566,3 +512,5 @@ None yet.
 > No need for exclusive NOERROR signal from upstream; existence of dry-run suffices.
 
 > Ask for NOERROR Extended DNS Error.
+
+> Remove most IETF 114 feedback sections for better flow of the document; kept the discussion about signaling.

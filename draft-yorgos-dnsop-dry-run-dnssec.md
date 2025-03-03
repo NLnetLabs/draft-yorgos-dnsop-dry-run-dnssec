@@ -246,19 +246,19 @@ errors back to the zone operators.
 DNS Error Reporting solely addresses the reporting of DNS errors but it does
 not give any guarantees that DNS Error Reporting aware resolvers are resolving
 the zone.
-This raises a concern especially for dry-run DNSSEC were absence of error
+This raises a concern especially for dry-run DNSSEC where absence of error
 reports needs to translate to a positive signal that no DNSSEC errors were
 encountered.
 
-To solve this, dry-run DNSSEC introduces the unsolicited TBD_no EDNS option
-that can be sent from authoritative name servers next to the Report-Channel
-(18) EDNS0 option from [@!RFC9567].
-With this option if no error was encountered during dry-run DNSSEC validation,
-dry-run DNSSEC aware resolvers can instead send a NOERROR report notifying the
-reporting agent of their presence.
+To solve this, dry-run DNSSEC introduces the NOERROR report.
+The NOERROR report is sent from the resolver when no error was encountered
+during dry-run DNSSEC validation and notifies the reporting agent of the
+resolver's presence.
 
 As with [@!RFC9567, see, section 4] the resolver will cache the reporting agent
 reply and dampen the number of NOERROR report queries.
+
+The NOERROR report is using the Extended DNS Error code TBD_no.
 
 ### Constructing the NOERROR Query {#no-error-query}
 The QNAME for the NOERROR report query follows the same semantics as with
@@ -273,8 +273,7 @@ following elements:
 - The list of non-null labels representing the apex of the query name that
   triggered this report.
 
-- The decimal value "0" in a single DNS label as the Extended DNS Error is not
-  relevant for the NOERROR report.
+- The decimal value of TBD_no in a single DNS label as the Extended DNS Error.
 
 - A label containing the string "_er".
 
@@ -287,30 +286,6 @@ exceeds 255 octets, it MUST NOT be sent.
 The apex is specifically used as the query name for resolvers to only send one
 NOERROR report (if applicable) per zone and for the monitoring agents to
 differentiate between different zones they are configured with.
-
-### EDNS0 Option Specification
-
-This method uses an EDNS0 [@!RFC6891] option to indicate that the domain would
-like to receive NOERROR reports.
-The option is structured as follows:
-
-~~~ ascii-art
-                     1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 3 3
- 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|        OPTION-CODE = TBD_no   |       OPTION-LENGTH = 0       |
-+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
-~~~
-
-Field definition details:
-
-OPTION-CODE
-: 2 octets; an EDNS0 code that is used in an EDNS0 option to indicate
-  willingness to receive NOERROR reports. The name for this EDNS0 option code
-  is Dry-Run NOERROR.
-
-OPTION-LENGTH
-: 2 octets; 0 value as this option has no content.
 
 ### Feedback from IETF 114
 
@@ -514,15 +489,15 @@ Value    | Digest Type     | Status   | Reference
 --------:|-----------------|----------|----------------
 TBD_ds   | SHA-256 DRY-RUN | OPTIONAL | [this document]
 
-## Dry-Run NOERROR EDNS0 Option
+## NOERROR Extended DNS Error
 
-This document defines a new entry in the "DNS EDNS0 Option Codes (OPT)"
+This document defines a new entry in the "Extended DNS Error Codes"
 registry on the "Domain Name System (DNS) Parameters" page:
 
 
-Value    | Name            | Status   | Reference
---------:|-----------------|----------|----------------
-TBD_no   | Dry-Run NOERROR | Optional | [this document]
+INFO-CODE | Purspose            | Reference
+---------:|---------------------|----------------
+TBD_no    | NOERROR reporting   | [this document]
 
 ## Wet-Run EDNS0 Option
 
@@ -573,3 +548,11 @@ None yet.
 > Use explicit dry-run algorithm types for DS.
 
 > Introduce NOERROR reporting.
+
+* draft-yorgos-dnsop-dry-run-dnssec-03
+
+> Shape up NOERROR reporting.
+
+> No need for exclusive NOERROR signal from upstream; existence of dry-run suffices.
+
+> Ask for NOERROR Extended DNS Error.

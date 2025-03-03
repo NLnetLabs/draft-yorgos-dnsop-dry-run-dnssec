@@ -206,10 +206,6 @@ This use case tests DNSSEC adoption for an insecure zone.
 The zone is signed and a single dry-run DS record is published on the parent.
 Validation errors yield error reports but invalid answers do not result in
 SERVFAIL responses to clients.
-In the absence of real DS records, resolvers fallback to no DS records for the
-zone.
-Essentially treating the zone as insecure, the same as before the dry-run DS
-publication.
 
 ### Experimental DNSSEC configuration {#experimental-dnssec-configuration}
 
@@ -217,27 +213,40 @@ This use case can test a completely different DNSSEC configuration for an
 already signed zone.
 The zone is doubly signed and there are at least two DS RRs in the parent zone.
 Dry-run resolvers try to use the dry-run part of the zone.
-In case of validation errors they fallback to the real DS and restart
-validation which may or may not lead to further validation errors depending on
-the real DNSSEC status of the zone.
 
 ### Key rollover {#key-rollover}
 
 As with the experimental case above, but for the benefit of testing a key
 rollover before actually committing to it.
-The rollover can be tested by introducing the real DS also as a dry-run DS
-record as the first step.
+The rollover test can be initiated from the zone operator by introducing the
+real DS also as a dry-run DS as the first step of the test.
 Normal key rollover procedures can continue by introducing the new key as
 another dry-run DS record.
-In case of validation errors, dry-run resolvers fallback to the real DS and
-restart validation.
-When testing was successful, the same exact procedure can be followed by
-replacing the dry-run DS steps with real DSes.
+Dry-run resolvers try to use the dry-run part of the zone which now resembles
+a key rollover.
+When testing was successful, the key rollover procedure can be repeated in the
+real DS space with the same keys.
 
 A special key rollover case could be for the root.
 This can be made possible by specifying the dry-run DS Digest Type in the
 <DigestType> element in http://data.iana.org/root-anchors/root-anchors.xml or a
 different way of indicating in the xml file.
+
+## Fallback behavior {#fallback}
+
+In case of validation errors with the dry-run DSes, dry-run resolvers fallback
+to the real DSes and restart validation.
+
+If there are no real DSes, as in the DNSSEC adoption use case, the zone
+is resolved as insecure.
+
+If there are real DSes, as in the experimental DNSSEC configuration and key
+rollover use cases, the zone is validated based on them which may or may not
+lead to further validation errors depending on the real DNSSEC status of the
+zone.
+
+Note that dry-run fallback validation can lead to increased workload which is
+discussed further in (#security-workload).
 
 ## NOERROR report {#no-error}
 
@@ -447,6 +456,7 @@ DSes.
 Dry-run resolver implementations need to consider this and allow for the same
 validation limits regardless if the validation is for a real DNSSEC or a
 dry-run DNSSEC zone, or a zone combining both.
+
 Keeping (and resetting) the same validation limits is crucial for failure
 reporting as it will realistically reflect the same behavior (and fail for the
 same reasons) as with non-dry-run resolvers.
@@ -457,6 +467,7 @@ The real DNSSEC part of the zone will have the chance to validate under the
 same workload limits and any previous dry-run validation workload will not
 result in manifested DNSSEC errors due to premature exhaustion of validation
 limits for example.
+
 Thus, on dry-run validation failures the validation workload limits MUST be
 reset and allow for the same workload limits when restarting validation.
 
@@ -542,3 +553,5 @@ None yet.
 > Remove most IETF 114 feedback sections for better flow of the document; kept the discussion about signaling.
 
 > Add security considerations for increased validation workload.
+
+> Add an explicit fallback behavior section.

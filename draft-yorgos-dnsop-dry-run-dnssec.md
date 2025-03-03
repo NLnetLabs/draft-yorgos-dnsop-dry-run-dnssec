@@ -464,6 +464,8 @@ so that both cases above are covered.
 
 # Security Considerations {#security}
 
+## DNSSEC status {#security-dnssec}
+
 For the use case of DNSSEC adoption, dry-run DNSSEC disables one of the
 fundamental guarantees of DNSSEC, data integrity.
 Bogus answers for expired/invalid data will become insecure answers providing
@@ -476,6 +478,14 @@ but rather a temporarily intermediate test step of a zone going secure.
 
 Thus, a dry-run only zone (only dry-run DSes on the parent) SHOULD NOT be
 considered as DNSSEC signed since it does not offer all the DNSSEC guarantees.
+
+## Error reporting {#security-error-report}
+
+Since dry-run DNSSEC relies heavily on DNS Error Reporting [@!RFC9567], the
+same security considerations about the generated error reports apply here as
+well.
+Especially the use of TCP or DNS Cookies for the reports, which can be enforced
+by the monitoring agent to make it harder to falsify the source address.
 
 
 # IANA Considerations

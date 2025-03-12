@@ -475,8 +475,9 @@ reset and allow for the same workload limits when restarting validation.
 
 ## DRY-RUN DS Type Digest Algorithm
 
-This document defines a new entry in the "Delegation Signer (DS) Resource
-Record (RR) Type Digest Algorithms" registry:
+This document defines a new entry in the "Digest Algorithms" registry in the
+"Delegation Signer (DS) Resource Record (RR) Type Digest Algorithms" registry
+at https://www.iana.org/assignments/ds-rr-types :
 
 Value    | Digest Type     | Status   | Reference
 --------:|-----------------|----------|----------------
@@ -485,8 +486,8 @@ TBD_ds   | SHA-256 DRY-RUN | OPTIONAL | [this document]
 ## NOERROR Extended DNS Error
 
 This document defines a new entry in the "Extended DNS Error Codes"
-registry on the "Domain Name System (DNS) Parameters" page:
-
+registry in the "Domain Name System (DNS) Parameters" registry group at
+https://www.iana.org/assignments/dns-parameters :
 
 INFO-CODE | Purspose            | Reference
 ---------:|---------------------|----------------
@@ -495,8 +496,8 @@ TBD_no    | NOERROR reporting   | [this document]
 ## Wet-Run EDNS0 Option
 
 This document defines a new entry in the "DNS EDNS0 Option Codes (OPT)"
-registry on the "Domain Name System (DNS) Parameters" page:
-
+registry in the "Domain Name System (DNS) Parameters" registry group at
+https://www.iana.org/assignments/dns-parameters :
 
 Value     | Name           | Status   | Reference
 ---------:|----------------|----------|----------------

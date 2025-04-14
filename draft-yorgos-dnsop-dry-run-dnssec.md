@@ -55,7 +55,7 @@ This document describes a method called "dry-run DNSSEC" that allows for
 testing DNSSEC deployments without affecting the DNS service in case of DNSSEC
 errors.
 It accomplishes that by introducing new DS Type Digest Algorithms that when
-used in a DS record,  referred to as dry-run DS, signal to validating resolvers
+used in a DS record, referred to as dry-run DS, signal to validating resolvers
 that dry-run DNSSEC is used for the zone.
 DNSSEC errors are then reported with DNS Error Reporting, but any bogus
 responses to clients are withheld.
@@ -74,8 +74,8 @@ DNSSEC was introduced to provide DNS with data origin authentication and data
 integrity.
 This brought quite an amount of complexity and fragility to the DNS which in
 turn still hinders general adoption.
-When an operator decides to publish a newly signed zone there is no way to
-realistically check that DNS resolution will not break for the zone.
+When an operator decides to adopt DNSSEC on an existing insecure zone there is
+no way to realistically check that DNS resolution will not break for the zone.
 
 Recent efforts that improve troubleshooting DNS and DNSSEC include Extended DNS
 Errors [@!RFC8914] and DNS Error Reporting [@!RFC9567].
@@ -85,8 +85,8 @@ The latter introduces a way for resolvers to report those error codes to the
 zone operators.
 
 This document describes a method called "dry-run DNSSEC" that builds upon the
-two aforementioned efforts and gives confidence to operators to adopt DNSSEC by
-enabling production testing of a DNSSEC zone.
+two aforementioned efforts and provides measurable feedback about DNSSEC
+resolution health to operators by enabling production testing of a DNSSEC zone.
 This is accomplished by introducing new DS Type Digest Algorithms.
 The zone operator signs the zone and makes sure that the DS record published on
 the parent side uses the specific DS Type Digest Algorithm.
@@ -94,9 +94,8 @@ Validating resolvers that don't support the DS Type Digest algorithms ignore it
 as per [@!RFC6840, see, section 5.2].
 Validating resolvers that do support dry-run DNSSEC make use of [@!RFC8914] and
 [@!RFC9567] to report any DNSSEC errors to the zone operator.
-If a DNSSEC validation error was due to dry-run DNSSEC, validation restarts by
-ignoring the dry-run DS in order to give the real DNS/DNSSEC response to the
-client.
+If a DNSSEC validation error was due to dry-run DNSSEC, validation falls back
+to insecure as the reply to the client.
 
 This allows real world testing with resolvers that support dry-run DNSSEC
 by reporting DNSSEC feedback, without breaking DNS resolution for the domain
@@ -112,11 +111,8 @@ The key words "**MUST**", "**MUST NOT**", "**REQUIRED**",
 BCP 14 [@!RFC2119;@!RFC8174] when, and only when, they appear in all
 capitals, as shown here.
 
-real DS
-: The actual DS record for the delegation.
-
 dry-run DS
-: The DS record with the special DS type digest algorithm that signals dry-run
+: The DS set with the special DS Type Digest Algorithm that signals dry-run
   DNSSEC for the delegation.
 
 dry-run zone
@@ -157,26 +153,6 @@ dry-run DS record instead.
 See (#signaling) for more information on the dry-run DS record itself, and
 (#provisioning) on the parent-child communication for the dry-run DS record.
 
-Validating resolvers that don't support the DS Type Digest algorithm ignore it
-as per [@!RFC6840, see, section 5.2].
-Validating resolvers that support dry-run DNSSEC are signaled to treat the
-zone as a dry-run zone.
-Validating resolvers that support dry-run DNSSEC SHOULD support [@!RFC9567] in
-order to report possible errors back to the operators.
-
-Valid answers as a result of dry-run validation yield authentic data (AD)
-responses and clients that expect the AD flag can already benefit from the
-transition.
-
-Invalid answers yield the response that would have been answered when no
-dry-run DS would have been present in the parent instead of SERVFAIL.
-For zones that had only dry-run DS RRs in the parent, an invalid answer yields
-an insecure response.
-This is not proper data integrity but the delegation SHOULD NOT be considered
-DNSSEC signed at this point.
-For zones that had other non dry-run DS RRs in the parent, validation MUST
-restart by using those RRs instead.
-
 [@!RFC9567] is used for invalid answers and it can generate reports
 for errors in dry-run DNSSEC zones.
 This helps with monitoring potential DNS breakage when testing a DNSSEC
@@ -191,62 +167,49 @@ not introduce DNS breakage, the turn-key action to conclude testing and commit
 to the singed zone is to replace the dry-run DS with the real DS record on the
 parent zone.
 
-## Use cases {#use-cases}
+## DNSSEC validation of a dry-run zone {#dnssec-validation}
 
-Dry-run DNSSEC can be used to test different DNSSEC scenarios.
-From adopting DNSSEC for a zone, which is the main goal of this document, to
-testing experimental DNSSEC configurations and key rollovers.
-Dry-run resolvers generate error reports in case of validation errors in
-dry-run zones and they fallback to the non-dry-run part of the zones to
-complete validation.
+Validating resolvers that don't support the DS Type Digest algorithm ignore it
+as per [@!RFC6840, see, section 5.2].
+Validating resolvers that support dry-run DNSSEC are signaled to treat the
+zone as a dry-run zone.
+Validating resolvers that support dry-run DNSSEC SHOULD support [@!RFC9567] in
+order to report possible errors back to the operators.
 
-### DNSSEC adoption {#dnssec-adoption}
+Valid answers as a result of dry-run validation yield authentic data (AD)
+responses and clients that expect the AD flag can already benefit from the
+transition.
 
-This use case tests DNSSEC adoption for an insecure zone.
-The zone is signed and a single dry-run DS record is published on the parent.
-Validation errors yield error reports but invalid answers do not result in
-SERVFAIL responses to clients.
+Invalid answers yield the insecure response that would have been answered when
+no dry-run DS would have been present in the parent, instead of SERVFAIL.
+This is not proper data integrity but the delegation SHOULD NOT be considered
+DNSSEC signed at this point.
 
-### Experimental DNSSEC configuration {#experimental-dnssec-configuration}
+Dry-run resolvers MAY store the dry-run validation status if they want to
+support end-to-end testing as discussed in (#opt-in).
 
-This use case can test a completely different DNSSEC configuration for an
-already signed zone.
-The zone is doubly signed and there are at least two DS RRs in the parent zone.
-Dry-run resolvers try to use the dry-run part of the zone.
+### Use of aggressive negative caching {#negative-caching}
 
-### Key rollover {#key-rollover}
+Aggressive negative caching [@!RFC8198] needs an explicit mention since DNSSEC
+faults there can lead to valid answers that could potentially mask underlying
+NSEC(3) issues.
 
-As with the experimental case above, but for the benefit of testing a key
-rollover before actually committing to it.
-The rollover test can be initiated from the zone operator by introducing the
-real DS also as a dry-run DS as the first step of the test.
-Normal key rollover procedures can continue by introducing the new key as
-another dry-run DS record.
-Dry-run resolvers try to use the dry-run part of the zone which now resembles
-a key rollover.
-When testing was successful, the key rollover procedure can be repeated in the
-real DS space with the same keys.
-
-A special key rollover case could be for the root.
-This can be made possible by specifying the dry-run DS Digest Type in the
-<DigestType> element in http://data.iana.org/root-anchors/root-anchors.xml or a
-different way of indicating in the xml file.
+Dry-run resolvers that support aggressive negative caching, upon synthesizing
+an answer in a dry-run zone, SHOULD hold off using the synthesized answer and
+instead issue an explicit query for the record in question.
+If the reply that comes back is different, i.e., the synthesized answer would
+prove that the record does not exist whereas the explicit query comes back with
+the record itself, this means that there lies an issue with negative records.
+A report SHOULD be generated using the Extended DNS Error code TBD_nsec and the
+answer to the explicit upstream query SHOULD be used instead of the synthesized
+one.
 
 ## Fallback behavior {#fallback}
 
-In case of validation errors with the dry-run DSes, dry-run resolvers fallback
-to the real DSes and restart validation.
-
-If there are no real DSes, as in the DNSSEC adoption use case, the zone
-is resolved as insecure.
-
-If there are real DSes, as in the experimental DNSSEC configuration and key
-rollover use cases, the zone is validated based on them which may or may not
-lead to further validation errors depending on the real DNSSEC status of the
-zone.
-
-Note that dry-run fallback validation can lead to increased workload which is
-discussed further in (#security-workload).
+In case of validation errors with the dry-run DS, dry-run resolvers fallback
+to the insecure state of the zone.
+Dry-run resolvers MAY store the dry-run validation status if they want to
+support end-to-end testing as discussed in (#opt-in).
 
 ## NOERROR report {#no-error}
 
@@ -321,7 +284,7 @@ option and MUST NOT attach the TBD_w EDNS0 option code in their replies.
 # Signaling {#signaling}
 
 Signaling to dry-run resolvers that a delegation uses dry-run DNSSEC happens
-naturally with the DS record returned from the parent zone by specifying new
+naturally with the DS set returned from the parent zone by specifying new
 DS Digest Type Algorithm(s).
 
 Each algorithm has a potential dry-run equivalent.
@@ -431,7 +394,7 @@ parties to affect the zone.
 This should be treated as a warning that dry-run DNSSEC is not an end solution
 but rather a temporarily intermediate test step of a zone going secure.
 
-Thus, a dry-run only zone (only dry-run DSes on the parent) SHOULD NOT be
+Thus, a dry-run zone (only dry-run DSes on the parent) SHOULD NOT be
 considered as DNSSEC signed since it does not offer all the DNSSEC guarantees.
 
 ## Error reporting {#security-error-report}
@@ -442,34 +405,6 @@ well.
 Especially the use of TCP or DNS Cookies for the reports, which can be enforced
 by the monitoring agent to make it harder to falsify the source address of
 error reports.
-
-## Workload increase {#security-workload}
-
-Dry-run resolvers need to do some extra work when encountered with a validation
-failure in a dry-run zone.
-They would need to send a DNS Error Report out and restart validation ignoring
-the dry-run DSes of the zone.
-
-Restarting the validation can lead to double the validation effort for use
-cases where the zone was already using DNSSEC, i.e., real DSes next to dry-run
-DSes.
-Dry-run resolver implementations need to consider this and allow for the same
-validation limits regardless if the validation is for a real DNSSEC or a
-dry-run DNSSEC zone, or a zone combining both.
-
-Keeping (and resetting) the same validation limits is crucial for failure
-reporting as it will realistically reflect the same behavior (and fail for the
-same reasons) as with non-dry-run resolvers.
-Furthermore, not imposing different limits on a dry-run resolver will not
-hamper the real DNSSEC part of the zone when fallback from dry-run needs to
-happen.
-The real DNSSEC part of the zone will have the chance to validate under the
-same workload limits and any previous dry-run validation workload will not
-result in manifested DNSSEC errors due to premature exhaustion of validation
-limits for example.
-
-Thus, on dry-run validation failures the validation workload limits MUST be
-reset and allow for the same workload limits when restarting validation.
 
 # IANA Considerations
 
@@ -489,9 +424,10 @@ This document defines a new entry in the "Extended DNS Error Codes"
 registry in the "Domain Name System (DNS) Parameters" registry group at
 https://www.iana.org/assignments/dns-parameters :
 
-INFO-CODE | Purspose            | Reference
----------:|---------------------|----------------
-TBD_no    | NOERROR reporting   | [this document]
+INFO-CODE | Purspose              | Reference
+---------:|-----------------------|----------------
+TBD_no    | NOERROR reporting     | [this document]
+TBD_nsec  | Broken negative cache | [this document]
 
 ## Wet-Run EDNS0 Option
 
@@ -503,11 +439,13 @@ Value     | Name           | Status   | Reference
 ---------:|----------------|----------|----------------
 TBD_wet   | Wet-Run DNSSEC | Optional | [this document]
 
-
 # Acknowledgements
 
-Martin Hoffmann contributed the idea of using the DS record of an already
-signed zone also as a dry-run DS in order to facilitate testing key rollovers.
+The authors would like to thank the following people, in no particular order,
+who contributed into shaping this document with their feedback: Libor Peltan,
+Dave Lawrence, Paul Wouters, Tedius Schrijven, Mats Dufberg, Petr Špaček, Marco
+Davids, Mark Andrews, Ben Schwartz, Peter Thomassen, Gavin Brown, Nils Wisiol,
+Viktor Dukhovni, Paul Hoffman and Lars-Johan Liman.
 
 
 {backmatter}
@@ -556,3 +494,11 @@ None yet.
 > Add security considerations for increased validation workload.
 
 > Add an explicit fallback behavior section.
+
+* draft-yorgos-dnsop-dry-run-dnssec-04
+
+> Dry-run only specified for insecure zones.
+
+> Add complete acknowledgement section covering all feedback thus far.
+
+> Add explicit section about negative caching.

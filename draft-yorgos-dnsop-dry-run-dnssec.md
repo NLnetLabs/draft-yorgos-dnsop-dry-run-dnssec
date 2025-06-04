@@ -510,3 +510,5 @@ None yet.
 > Add explicit section about negative caching.
 
 > Burn a bit in the DS Digest Type Algorithm for dry-run.
+
+> Specify that all DSes in the DS set must be dry-run.

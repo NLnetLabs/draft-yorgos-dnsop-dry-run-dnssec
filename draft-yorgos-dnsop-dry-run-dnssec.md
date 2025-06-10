@@ -55,7 +55,7 @@ This document describes a method called "dry-run DNSSEC" that allows for
 testing DNSSEC deployments without affecting the DNS service in case of DNSSEC
 errors.
 It accomplishes that by introducing new DS Type Digest Algorithms that when
-used in the records of a DS RRset, referred to as dry-run DS, signal to
+used in every record of a DS RRset, referred to as dry-run DS, signal to
 validating resolvers that dry-run DNSSEC is used for the zone.
 DNSSEC errors are then reported with DNS Error Reporting, but any bogus
 responses to clients are withheld.
@@ -88,7 +88,7 @@ This document describes a method called "dry-run DNSSEC" that builds upon the
 two aforementioned efforts and provides measurable feedback about DNSSEC
 resolution health to operators by enabling production testing of a DNSSEC zone.
 This is accomplished by introducing new DS Type Digest Algorithms.
-The zone operator signs the zone and makes sure that the DS record(s) in the
+The zone operator signs the zone and makes sure that every DS record in the
 published DS RRset on the parent side use dry-run DS Type Digest Algorithm(s).
 
 Validating resolvers that don't support the DS Type Digest algorithms ignore it

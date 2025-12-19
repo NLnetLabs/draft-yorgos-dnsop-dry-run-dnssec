@@ -1,5 +1,5 @@
-VERSION = 04
-DOCNAME = draft-yorgos-dnsop-dry-run-dnssec
+VERSION = 00
+DOCNAME = draft-ietf-dnsop-dry-run-dnssec
 today := $(shell TZ=UTC date +%Y-%m-%dT00:00:00Z)
 
 .PHONY: all prereq clean

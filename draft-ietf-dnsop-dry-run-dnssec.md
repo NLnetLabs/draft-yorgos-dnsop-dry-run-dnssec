@@ -512,3 +512,7 @@ None yet.
 > Burn a bit in the DS Digest Type Algorithm for dry-run.
 
 > Specify that all DSes in the DS set must be dry-run.
+
+* draft-ietf-dnsop-dry-run-dnssec-00
+
+> Same as draft-yorgos-dnsop-dry-run-dnssec-04 but resubmitted after WG adoption.
